@@ -1,9 +1,10 @@
-from fastapi import APIRouter
 import requests
-from config import settings
 from cache import redis_client
+from config import settings
+from fastapi import APIRouter
 
 router = APIRouter(prefix="/health", tags=["health"])
+
 
 @router.get("")
 def check_health():
@@ -26,7 +27,11 @@ def check_health():
         pass
 
     # Resolve Elasticsearch URL dynamically depending on running context (Docker vs local host)
-    es_url = "http://elasticsearch:9200" if "redis" in settings.REDIS_URL else "http://localhost:9200"
+    es_url = (
+        "http://elasticsearch:9200"
+        if "redis" in settings.REDIS_URL
+        else "http://localhost:9200"
+    )
     elasticsearch_healthy = False
     try:
         res = requests.get(es_url, timeout=2)
@@ -41,6 +46,6 @@ def check_health():
         "services": {
             "redis": "healthy" if redis_healthy else "unhealthy",
             "prometheus": "healthy" if prometheus_healthy else "unhealthy",
-            "elasticsearch": "healthy" if elasticsearch_healthy else "unhealthy"
-        }
+            "elasticsearch": "healthy" if elasticsearch_healthy else "unhealthy",
+        },
     }

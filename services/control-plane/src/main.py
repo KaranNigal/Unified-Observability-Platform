@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.db import Base, engine
-from src.routers import auth, organizations, api_keys
+from src.routers import api_keys, auth, organizations
 
 # Initialize database tables on startup
 Base.metadata.create_all(bind=engine)
@@ -12,7 +12,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/control-plane/docs",
     openapi_url="/control-plane/openapi.json",
-    redoc_url="/control-plane/redoc"
+    redoc_url="/control-plane/redoc",
 )
 
 # Enable CORS
@@ -29,13 +29,15 @@ app.include_router(auth.router)
 app.include_router(organizations.router)
 app.include_router(api_keys.router)
 
+
 @app.get("/")
 def read_root():
     return {
         "service": "Capsule Control Plane",
         "status": "healthy",
-        "docs": "/control-plane/docs"
+        "docs": "/control-plane/docs",
     }
+
 
 @app.get("/health")
 def health():

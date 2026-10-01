@@ -1,17 +1,20 @@
-from pydantic import BaseModel, EmailStr, Field
-from typing import Optional, List
 from datetime import datetime
+
+from pydantic import BaseModel, EmailStr, Field
+
 
 # Auth Schemas
 class SignupRequest(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=6)
     name: str = Field(..., min_length=2)
-    organization_name: Optional[str] = None
+    organization_name: str | None = None
+
 
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -24,6 +27,7 @@ class TokenResponse(BaseModel):
     active_org_name: str
     role: str
 
+
 class UserProfileResponse(BaseModel):
     id: str
     email: str
@@ -31,34 +35,40 @@ class UserProfileResponse(BaseModel):
     created_at: datetime
     active_tenant_id: str
     active_org_id: str
-    organizations: List[dict]
+    organizations: list[dict]
+
 
 class SwitchTenantRequest(BaseModel):
     org_id: str
 
+
 # Tenant / Project Schemas
 class CreateProjectRequest(BaseModel):
     name: str
-    description: Optional[str] = ""
+    description: str | None = ""
+
 
 class ProjectResponse(BaseModel):
     id: str
     name: str
-    description: Optional[str]
+    description: str | None
     tenant_id: str
     created_at: datetime
 
+
 class CreateApiKeyRequest(BaseModel):
     name: str
+
 
 class ApiKeyResponse(BaseModel):
     id: str
     name: str
     key_prefix: str
-    raw_key: Optional[str] = None # Only returned when created
+    raw_key: str | None = None  # Only returned when created
     tenant_id: str
     created_at: datetime
     is_active: bool
+
 
 class OnboardingConfigResponse(BaseModel):
     tenant_id: str

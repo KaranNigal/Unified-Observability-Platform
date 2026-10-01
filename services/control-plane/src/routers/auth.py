@@ -1,25 +1,34 @@
 import re
 import secrets
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from src.db import get_db
-from src.models import User, Organization, Membership, MembershipRole
-from src.schemas import SignupRequest, LoginRequest, TokenResponse, RefreshTokenRequest, UserResponse
-from src.security.security import (
-    hash_password,
-    verify_password,
-    create_access_token,
-    create_refresh_token,
-    decode_token
+from src.models import Membership, MembershipRole, Organization, User
+from src.schemas import (
+    LoginRequest,
+    RefreshTokenRequest,
+    SignupRequest,
+    TokenResponse,
+    UserResponse,
 )
 from src.security.auth import get_current_user
+from src.security.security import (
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+    hash_password,
+    verify_password,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+
 def slugify(text: str) -> str:
     text = text.lower().strip()
-    text = re.sub(r'[^\w\s-]', '', text)
-    return re.sub(r'[-\s]+', '-', text)
+    text = re.sub(r"[^\w\s-]", "", text)
+    return re.sub(r"[-\s]+", "-", text)
+
 
 @router.post("/signup", response_model=TokenResponse)
 def signup(req: SignupRequest, db: Session = Depends(get_db)):
@@ -28,14 +37,14 @@ def signup(req: SignupRequest, db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User with this email already exists"
+            detail="User with this email already exists",
         )
 
     # 2. Create User
     user = User(
         email=req.email.lower(),
         name=req.name,
-        hashed_password=hash_password(req.password)
+        hashed_password=hash_password(req.password),
     )
     db.add(user)
     db.flush()
@@ -55,9 +64,7 @@ def signup(req: SignupRequest, db: Session = Depends(get_db)):
 
     # 4. Add User as Owner of Organization
     membership = Membership(
-        org_id=org.id,
-        user_id=user.id,
-        role=MembershipRole.OWNER.value
+        org_id=org.id, user_id=user.id, role=MembershipRole.OWNER.value
     )
     db.add(membership)
     db.commit()
@@ -72,16 +79,16 @@ def signup(req: SignupRequest, db: Session = Depends(get_db)):
         token_type="bearer",
         user_id=user.id,
         email=user.email,
-        name=user.name
+        name=user.name,
     )
+
 
 @router.post("/login", response_model=TokenResponse)
 def login(req: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == req.email.lower()).first()
     if not user or not verify_password(req.password, user.hashed_password):
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
         )
 
     access_token = create_access_token(user.id, user.email)
@@ -93,8 +100,9 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
         token_type="bearer",
         user_id=user.id,
         email=user.email,
-        name=user.name
+        name=user.name,
     )
+
 
 @router.post("/refresh", response_model=TokenResponse)
 def refresh_token(req: RefreshTokenRequest, db: Session = Depends(get_db)):
@@ -102,15 +110,14 @@ def refresh_token(req: RefreshTokenRequest, db: Session = Depends(get_db)):
     if not payload or payload.get("type") != "refresh":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired refresh token"
+            detail="Invalid or expired refresh token",
         )
 
     user_id = payload.get("sub")
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
         )
 
     new_access_token = create_access_token(user.id, user.email)
@@ -122,8 +129,9 @@ def refresh_token(req: RefreshTokenRequest, db: Session = Depends(get_db)):
         token_type="bearer",
         user_id=user.id,
         email=user.email,
-        name=user.name
+        name=user.name,
     )
+
 
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):
@@ -131,5 +139,5 @@ def get_me(current_user: User = Depends(get_current_user)):
         id=current_user.id,
         email=current_user.email,
         name=current_user.name,
-        created_at=current_user.created_at
+        created_at=current_user.created_at,
     )

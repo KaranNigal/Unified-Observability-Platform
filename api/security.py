@@ -1,17 +1,19 @@
-import os
+import datetime
 import hashlib
 import secrets
-import datetime
-from typing import Optional, Dict, Any
-import jwt
+from typing import Any
+
 import bcrypt
+import jwt
 from config import settings
+
 
 def hash_password(password: str) -> str:
     # Truncate to 72 bytes as required by bcrypt specification
     pwd_bytes = password.encode("utf-8")[:72]
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(pwd_bytes, salt).decode("utf-8")
+
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     try:
@@ -21,8 +23,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     except Exception:
         return False
 
+
 def hash_api_key(key: str) -> str:
     return hashlib.sha256(key.encode("utf-8")).hexdigest()
+
 
 def generate_api_key(prefix: str = "cap_live_") -> tuple[str, str, str]:
     """
@@ -35,19 +39,29 @@ def generate_api_key(prefix: str = "cap_live_") -> tuple[str, str, str]:
     key_prefix = raw_key[:12] + "..."
     return raw_key, key_hash, key_prefix
 
-def create_access_token(data: Dict[str, Any], expires_delta: Optional[datetime.timedelta] = None) -> str:
+
+def create_access_token(
+    data: dict[str, Any], expires_delta: datetime.timedelta | None = None
+) -> str:
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.datetime.utcnow() + expires_delta
     else:
-        expire = datetime.datetime.utcnow() + datetime.timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.datetime.utcnow() + datetime.timedelta(
+            minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+        )
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+    encoded_jwt = jwt.encode(
+        to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM
+    )
     return encoded_jwt
 
-def decode_access_token(token: str) -> Optional[Dict[str, Any]]:
+
+def decode_access_token(token: str) -> dict[str, Any] | None:
     try:
-        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
+        payload = jwt.decode(
+            token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM]
+        )
         return payload
     except Exception:
         return None

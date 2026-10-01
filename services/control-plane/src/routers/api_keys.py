@@ -1,27 +1,28 @@
 import datetime
-from fastapi import APIRouter, Depends, HTTPException, status, Path
+
+from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
-from typing import List
 from src.db import get_db
 from src.models import ApiKey, Membership
 from src.schemas import (
+    ApiKeyCreatedResponse,
     ApiKeyCreateRequest,
     ApiKeyResponse,
-    ApiKeyCreatedResponse,
     ApiKeyVerifyRequest,
-    ApiKeyVerifyResponse
+    ApiKeyVerifyResponse,
 )
+from src.security.auth import require_org_admin, require_org_member
 from src.security.security import generate_api_key, hash_api_key
-from src.security.auth import require_org_member, require_org_admin
 
 router = APIRouter(tags=["api-keys"])
+
 
 @router.post("/organizations/{org_id}/api-keys", response_model=ApiKeyCreatedResponse)
 def create_api_key(
     req: ApiKeyCreateRequest,
     org_id: str = Path(...),
     admin_membership: Membership = Depends(require_org_admin),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     raw_key, key_hash, key_prefix = generate_api_key(prefix="uop_live_")
 
@@ -30,7 +31,7 @@ def create_api_key(
         name=req.name,
         key_hash=key_hash,
         key_prefix=key_prefix,
-        is_revoked=False
+        is_revoked=False,
     )
     db.add(api_key)
     db.commit()
@@ -45,14 +46,15 @@ def create_api_key(
         is_revoked=api_key.is_revoked,
         last_used_at=api_key.last_used_at,
         created_at=api_key.created_at,
-        revoked_at=api_key.revoked_at
+        revoked_at=api_key.revoked_at,
     )
 
-@router.get("/organizations/{org_id}/api-keys", response_model=List[ApiKeyResponse])
+
+@router.get("/organizations/{org_id}/api-keys", response_model=list[ApiKeyResponse])
 def list_api_keys(
     org_id: str = Path(...),
     membership: Membership = Depends(require_org_member),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     keys = db.query(ApiKey).filter(ApiKey.org_id == org_id).all()
     return [
@@ -64,17 +66,20 @@ def list_api_keys(
             is_revoked=k.is_revoked,
             last_used_at=k.last_used_at,
             created_at=k.created_at,
-            revoked_at=k.revoked_at
+            revoked_at=k.revoked_at,
         )
         for k in keys
     ]
 
-@router.post("/organizations/{org_id}/api-keys/{key_id}/revoke", response_model=ApiKeyResponse)
+
+@router.post(
+    "/organizations/{org_id}/api-keys/{key_id}/revoke", response_model=ApiKeyResponse
+)
 def revoke_api_key(
     org_id: str = Path(...),
     key_id: str = Path(...),
     admin_membership: Membership = Depends(require_org_admin),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     key = db.query(ApiKey).filter(ApiKey.id == key_id, ApiKey.org_id == org_id).first()
     if not key:
@@ -89,11 +94,11 @@ def revoke_api_key(
             is_revoked=key.is_revoked,
             last_used_at=key.last_used_at,
             created_at=key.created_at,
-            revoked_at=key.revoked_at
+            revoked_at=key.revoked_at,
         )
 
     key.is_revoked = True
-    key.revoked_at = datetime.datetime.now(datetime.timezone.utc)
+    key.revoked_at = datetime.datetime.now(datetime.UTC)
     db.commit()
     db.refresh(key)
 
@@ -105,8 +110,9 @@ def revoke_api_key(
         is_revoked=key.is_revoked,
         last_used_at=key.last_used_at,
         created_at=key.created_at,
-        revoked_at=key.revoked_at
+        revoked_at=key.revoked_at,
     )
+
 
 @router.post("/api-keys/verify", response_model=ApiKeyVerifyResponse)
 def verify_api_key(req: ApiKeyVerifyRequest, db: Session = Depends(get_db)):
@@ -127,7 +133,7 @@ def verify_api_key(req: ApiKeyVerifyRequest, db: Session = Depends(get_db)):
         return ApiKeyVerifyResponse(valid=False, reason="API Key has been revoked")
 
     # Update last_used_at timestamp
-    api_key.last_used_at = datetime.datetime.now(datetime.timezone.utc)
+    api_key.last_used_at = datetime.datetime.now(datetime.UTC)
     db.commit()
 
     org = api_key.organization
@@ -135,5 +141,5 @@ def verify_api_key(req: ApiKeyVerifyRequest, db: Session = Depends(get_db)):
         valid=True,
         org_id=api_key.org_id,
         org_name=org.name if org else None,
-        key_id=api_key.id
+        key_id=api_key.id,
     )

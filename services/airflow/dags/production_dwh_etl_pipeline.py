@@ -6,9 +6,9 @@ Generated via Capsule Data Observability Platform
 """
 
 from datetime import datetime, timedelta
+
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.operators.bash import BashOperator
 
 default_args = {
     "owner": "airflow",
@@ -19,23 +19,30 @@ default_args = {
     "retry_delay": timedelta(minutes=3),
 }
 
+
 def extract_source_data(**context):
     print("Extracting staging data from source systems...")
     return {"extracted_rows": 15420, "timestamp": str(datetime.utcnow())}
 
+
 def validate_schema_quality(**context):
     ti = context["ti"]
     meta = ti.xcom_pull(task_ids="extract_staging_data")
-    print(f"Validating {meta.get('extracted_rows', 0)} records against schema constraints...")
+    print(
+        f"Validating {meta.get('extracted_rows', 0)} records against schema constraints..."
+    )
     return True
+
 
 def transform_aggregates(**context):
     print("Computing metrics: 1h VWAP, active users, session counts...")
     return {"transformed_rows": 15420, "status": "CLEAN"}
 
+
 def load_into_dwh(**context):
     print("Upserting transformed batches into PostgreSQL analytics tables...")
     return "SUCCESS"
+
 
 with DAG(
     dag_id="production_dwh_etl_pipeline",
@@ -44,7 +51,7 @@ with DAG(
     schedule_interval="0 */4 * * *",
     start_date=datetime(2026, 1, 1),
     catchup=False,
-    tags=["etl","postgres","data-warehouse","batch","demo"],
+    tags=["etl", "postgres", "data-warehouse", "batch", "demo"],
 ) as dag:
 
     extract_task = PythonOperator(

@@ -1,14 +1,46 @@
 import re
 
-METRIC_SELECTOR_PATTERN = re.compile(r'([a-zA-Z_:][a-zA-Z0-9_:]*)(\{[^}]*\})?')
+METRIC_SELECTOR_PATTERN = re.compile(r"([a-zA-Z_:][a-zA-Z0-9_:]*)(\{[^}]*\})?")
 
 RESERVED_WORDS = {
-    "sum", "rate", "irate", "increase", "avg", "min", "max", "count",
-    "by", "without", "histogram_quantile", "topk", "bottomk", "stddev",
-    "stdvar", "count_values", "quantile", "abs", "absent", "ceil", "floor",
-    "round", "clamp", "clamp_max", "clamp_min", "exp", "ln", "log2", "log10",
-    "sqrt", "predict_linear", "resets", "changes", "deriv", "delta", "idelta"
+    "sum",
+    "rate",
+    "irate",
+    "increase",
+    "avg",
+    "min",
+    "max",
+    "count",
+    "by",
+    "without",
+    "histogram_quantile",
+    "topk",
+    "bottomk",
+    "stddev",
+    "stdvar",
+    "count_values",
+    "quantile",
+    "abs",
+    "absent",
+    "ceil",
+    "floor",
+    "round",
+    "clamp",
+    "clamp_max",
+    "clamp_min",
+    "exp",
+    "ln",
+    "log2",
+    "log10",
+    "sqrt",
+    "predict_linear",
+    "resets",
+    "changes",
+    "deriv",
+    "delta",
+    "idelta",
 }
+
 
 def inject_tenant_promql(query: str, tenant_id: str) -> str:
     """
