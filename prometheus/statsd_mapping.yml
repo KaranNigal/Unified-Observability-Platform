@@ -1,0 +1,26 @@
+mappings:
+  # Airflow DAG success counter
+  - match: "airflow.dagrun.success.*"
+    name: "airflow_dagrun_success"
+    labels:
+      dag_id: "$1"
+
+  # Airflow DAG failure counter
+  - match: "airflow.dagrun.failed.*"
+    name: "airflow_dagrun_failed"
+    labels:
+      dag_id: "$1"
+
+  # Airflow task duration timer
+  - match: "airflow.dag.*.*.duration"
+    name: "airflow_task_duration_seconds"
+    labels:
+      dag_id: "$1"
+      task_id: "$2"
+
+  # Airflow task execution timers
+  - match: "airflow.task.timer.*.*"
+    name: "airflow_task_timer_seconds"
+    labels:
+      dag_id: "$1"
+      task_id: "$2"

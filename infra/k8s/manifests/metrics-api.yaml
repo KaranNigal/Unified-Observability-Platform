@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metrics-api
+  labels:
+    app: metrics-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: metrics-api
+  template:
+    metadata:
+      labels:
+        app: metrics-api
+    spec:
+      containers:
+        - name: metrics-api
+          image: metrics-api:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: API_KEY
+              value: "super-secret-key-123"
+            - name: REDIS_URL
+              # Use the Elasticache endpoint from Terraform in production
+              value: "redis://obs-redis-dev.xxxxx.cache.amazonaws.com:6379/0" 
+            - name: PROMETHEUS_URL
+              # Refers to the Helm-installed Prometheus service
+              value: "http://prometheus-server:80"
+            - name: ENVIRONMENT
+              value: "production"
+          ports:
+            - containerPort: 8004
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8004
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: metrics-api
+spec:
+  type: NodePort
+  selector:
+    app: metrics-api
+  ports:
+    - protocol: TCP
+      port: 8004
+      targetPort: 8004
+      # Explicitly bind to the NodePort that the ALB Target Group is looking for
+      nodePort: 8004

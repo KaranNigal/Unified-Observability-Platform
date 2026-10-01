@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kafka-load-test
+  labels:
+    app: kafka-load-test
+spec:
+  # Run 10 producer pods in parallel to generate massive load
+  parallelism: 10
+  completions: 10
+  template:
+    metadata:
+      labels:
+        app: kafka-load-test
+    spec:
+      restartPolicy: Never
+      # Target the specific Phase 7 load-test node group
+      nodeSelector:
+        eks.amazonaws.com/nodegroup: load-test-group
+      containers:
+        - name: kafka-producer
+          image: kafka-producer:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka:9092"
+            - name: KAFKA_TOPIC
+              value: "trading-events"
+            # Target extremely high throughput per pod
+            - name: MESSAGES_PER_SECOND
+              value: "10000"
+            - name: ENVIRONMENT
+              value: "production"
+          resources:
+            requests:
+              cpu: "1000m"
+              memory: "1Gi"
+            limits:
+              cpu: "2000m"
+              memory: "2Gi"

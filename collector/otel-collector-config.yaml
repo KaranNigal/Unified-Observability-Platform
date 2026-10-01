@@ -1,0 +1,117 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  # Prometheus Scrape Targets
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: "airflow"
+          scrape_interval: 10s
+          static_configs:
+            - targets: ["statsd-exporter:9102"]
+              labels:
+                tenant_id: "demo"
+
+        - job_name: "pyspark"
+          scrape_interval: 10s
+          static_configs:
+            - targets: ["pushgateway:9091"]
+              labels:
+                tenant_id: "demo"
+
+        - job_name: "orders-service"
+          scrape_interval: 10s
+          static_configs:
+            - targets: ["orders-service:8000"]
+              labels:
+                tenant_id: "demo"
+
+        - job_name: "inventory-service"
+          scrape_interval: 10s
+          static_configs:
+            - targets: ["inventory-service:8001"]
+              labels:
+                tenant_id: "demo"
+
+        - job_name: "kafka-producer"
+          scrape_interval: 10s
+          static_configs:
+            - targets: ["kafka-producer:8002"]
+              labels:
+                tenant_id: "demo"
+
+        - job_name: "kafka-consumer"
+          scrape_interval: 10s
+          static_configs:
+            - targets: ["kafka-consumer:8003"]
+              labels:
+                tenant_id: "demo"
+
+  # Filelog Receiver for microservices logs
+  filelog:
+    include:
+      - /var/log/app/orders-service.log
+      - /var/log/app/inventory-service.log
+    start_at: beginning
+    operators:
+      - type: json_parser
+        timestamp:
+          parse_from: attributes.timestamp
+          layout_type: gotime
+          layout: "2006-01-02T15:04:05.999999999Z07:00"
+        severity:
+          parse_from: attributes.level
+
+processors:
+  batch:
+    send_batch_size: 8192
+    timeout: 1s
+
+  # Multi-tenant Resource Processor: Stamps default tenant_id if missing from incoming telemetry
+  resource/tenant:
+    attributes:
+      - key: tenant_id
+        value: "demo"
+        action: insert
+
+exporters:
+  # Export metrics as Prometheus Scrape Endpoint
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: "otel"
+    resource_to_telemetry_conversion:
+      enabled: true
+
+  # Export logs to Logstash HTTP Input in OTLP JSON format
+  otlphttp:
+    endpoint: "http://logstash:5000"
+    encoding: json
+
+  # Export traces to Jaeger
+  otlp/jaeger:
+    endpoint: "jaeger:4317"
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    metrics:
+      receivers: [prometheus]
+      processors: [resource/tenant, batch]
+      exporters: [prometheus]
+    logs:
+      receivers: [filelog]
+      processors: [resource/tenant, batch]
+      exporters: [otlphttp]
+    traces:
+      receivers: [otlp]
+      processors: [resource/tenant, batch]
+      exporters: [otlp/jaeger]
+  telemetry:
+    logs:
+      level: "info"

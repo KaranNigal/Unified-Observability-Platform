@@ -1,0 +1,43 @@
+route:
+  group_by: ['alertname', 'component']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  
+  # Default receiver for alerts that don't match any routes
+  receiver: 'dashboard-only'
+
+  routes:
+    # 1. Paging Level (Wakes people up at 3 AM)
+    # E.g. Trading tail latency spikes, microservice failures
+    - matchers:
+        - severity="page"
+      receiver: 'pagerduty-webhook'
+      continue: false
+
+    # 2. Ticketing Level (Look at this during business hours)
+    # E.g. Consumer lag, non-critical DAG failures
+    - matchers:
+        - severity="ticket"
+      receiver: 'jira-webhook'
+      continue: false
+
+    # 3. Info Level (No notifications, just keep on the dashboard)
+    - matchers:
+        - severity="info"
+      receiver: 'dashboard-only'
+      continue: false
+
+receivers:
+  - name: 'pagerduty-webhook'
+    webhook_configs:
+      - url: 'http://example.com/api/v1/pagerduty/alert'
+        send_resolved: true
+
+  - name: 'jira-webhook'
+    webhook_configs:
+      - url: 'http://example.com/api/v1/jira/create-ticket'
+        send_resolved: false
+
+  - name: 'dashboard-only'
+    # No configurations needed; alerts stay in Alertmanager/Prometheus for dashboard visibility only.

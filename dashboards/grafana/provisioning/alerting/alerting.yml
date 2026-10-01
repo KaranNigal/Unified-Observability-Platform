@@ -1,0 +1,88 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: system_alerts
+    folder: Observability Alerts
+    interval: 10s
+    rules:
+      - uid: alert-airflow-dag-fail
+        title: Airflow DAG failure rate is high
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: rate(otel_airflow_dagrun_failed[5m]) > 0
+              intervalMs: 15000
+              maxDataPoints: 43200
+              refId: A
+        for: 1m
+        annotations:
+          summary: "Airflow DAG Failure"
+          description: "An Airflow DAG has failed in the last 5 minutes."
+        labels:
+          severity: warning
+
+      - uid: alert-kafka-consumer-lag
+        title: Kafka Consumer Lag Alert
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: otel_kafka_consumer_lag > 100
+              intervalMs: 15000
+              maxDataPoints: 43200
+              refId: A
+        for: 1m
+        annotations:
+          summary: "Kafka Consumer Lag High"
+          description: "Kafka Consumer lag is greater than 100."
+        labels:
+          severity: warning
+
+      - uid: alert-microservice-error-rate
+        title: Microservices High Error Rate Alert
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: sum(rate(otel_http_requests_total{status=~"5.."}[5m])) / sum(rate(otel_http_requests_total[5m])) > 0.05
+              intervalMs: 15000
+              maxDataPoints: 43200
+              refId: A
+        for: 1m
+        annotations:
+          summary: "Microservices Error Rate High"
+          description: "HTTP 5xx rate has exceeded 5% over the last 5 minutes."
+        labels:
+          severity: critical
+
+contactPoints:
+  - orgId: 1
+    name: System Webhook Receiver
+    receivers:
+      - uid: cp-system-webhook
+        type: webhook
+        settings:
+          url: http://metrics-api:8004/api/v1/health
+        disableResolveMessage: false
+
+policies:
+  - orgId: 1
+    receiver: System Webhook Receiver
+    group_by: ['alertname']
+    group_wait: 10s
+    group_interval: 5m
+    repeat_interval: 4h

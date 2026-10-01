@@ -1,0 +1,22 @@
+{
+  "index_patterns": ["logs-*"],
+  "template": {
+    "settings": {
+      "index.lifecycle.name": "logs_retention_policy"
+    },
+    "mappings": {
+      "properties": {
+        "tenant_id": { "type": "keyword" },
+        "service_name": { "type": "keyword" },
+        "component": { "type": "keyword" },
+        "log_level": { "type": "keyword" },
+        "trace_id": { "type": "keyword" },
+        "span_id": { "type": "keyword" },
+        "source_host": { "type": "keyword" },
+        "environment": { "type": "keyword" },
+        "message": { "type": "text" },
+        "@timestamp": { "type": "date" }
+      }
+    }
+  }
+}
