@@ -1,0 +1,71 @@
+# ========================
+# Python
+# ========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+.venv/
+venv/
+*.whl
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# ========================
+# Environment
+# ========================
+.env
+!.env.example
+
+# ========================
+# Docker
+# ========================
+*.log
+docker-compose.override.yml
+
+# ========================
+# Terraform
+# ========================
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+!*.tfvars.example
+.terraform.lock.hcl
+crash.log
+
+# ========================
+# IDE
+# ========================
+.idea/
+.vscode/*
+!.vscode/settings.json
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ========================
+# Airflow
+# ========================
+services/airflow/logs/*
+!services/airflow/logs/.gitkeep
+services/airflow/plugins/*
+!services/airflow/plugins/.gitkeep
+
+# ========================
+# Node & Next.js
+# ========================
+node_modules/
+.next/
+out/
+build/
+.env*.local
+coverage/
+.vercel/
