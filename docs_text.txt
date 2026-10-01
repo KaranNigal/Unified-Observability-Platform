@@ -1,0 +1,340 @@
+PRODUCT REQUIREMENTS DOCUMENT
+Unified Observability Platform
+for Airflow, PySpark, Microservices & High-Volume Trading Systems
+with a High-Performance Metrics API
+Field
+Detail
+Project Group
+Group 4 — B.Tech Information Technology
+Team Members
+Manish Sanjay Narkhede (23510038)
+Karan Sunil Nigal (23510039)
+Niraj Tushar Shevade (23510055)
+Project Guide
+Prof. R. Y. Totare
+Head of Department
+Dr. H. B. Magar
+Institution
+AISSMS Institute of Information Technology, Pune
+Academic Year
+2026–27
+Domain
+Data Science / Cloud-Native Observability
+Document Version
+v1.0
+Date
+August 14, 2026
+Department of Information Technology
+Table of Contents
+1. Document Control
+1.1 Revision History
+Version
+Date
+Author(s)
+Summary of Changes
+0.1
+Jun 2026
+Manish, Karan, Niraj
+Initial synopsis submitted to department
+1.0
+Aug 14, 2026
+Manish, Karan, Niraj
+Comprehensive PRD compiled from synopsis + design deck
+1.2 Purpose of this Document
+This Product Requirements Document (PRD) consolidates the approved project synopsis and the system-design deck into a single authoritative reference for the final-year capstone project. It defines the problem, scope, architecture, functional and non-functional requirements, data contracts, milestones, and success criteria that will guide implementation, evaluation, and the final project report.
+1.3 Intended Audience
+Project team (Manish Narkhede, Karan Nigal, Niraj Shevade)
+Project Guide (Prof. R. Y. Totare) and HOD (Dr. H. B. Magar) for review and sign-off
+Department examiners evaluating the project at synopsis, mid-term, and final review stages
+Future contributors, since the platform is intended to be released as open source
+2. Executive Summary
+Modern data engineering and fintech platforms depend on a constellation of tools — Apache Airflow for orchestration, PySpark for large-scale processing, polyglot microservices for business logic, and Kafka-based systems for real-time trading — that together generate a high volume of metrics and logs. Existing observability options force a trade-off: commercial suites such as Datadog are comprehensive but prohibitively expensive, while a standalone ELK deployment is affordable but degrades under high-throughput, diverse-metric workloads.
+This project delivers a Unified Observability Platform that ingests metrics and logs from Airflow, PySpark, microservices, and a Kafka-based trading system into a single, coherent, cloud-native stack. Prometheus collects and stores time-series metrics; the ELK Stack centralizes logs; Grafana and Kibana provide real-time visualization; and a FastAPI-based Metrics API, backed by Redis caching, exposes low-latency programmatic access for downstream consumers. The entire platform is containerized with Docker, orchestrated on Amazon EKS, and provisioned as code with Terraform — targeting validated operation at a 1–2 billion Kafka message scale.
+The platform's core value proposition is combining data-pipeline observability and high-volume trading-system monitoring under one automated, open-source layer — something no single reviewed reference project offers — while remaining affordable, reproducible, and appropriate for both students learning observability concepts and practitioners running production-grade infrastructure.
+3. Problem Statement & Motivation
+3.1 The Core Problem
+Modern data platforms must simultaneously manage Airflow DAGs, PySpark batch/streaming jobs, polyglot microservices, and high-throughput Kafka-based trading applications. Metrics and logs from these systems are typically scattered across disparate, poorly-integrated tools, making it difficult to maintain a single, trustworthy view of overall system health.
+This fragmentation delays issue detection until after disruption has already occurred, and the operating cost of stitching together multiple monitoring tools grows with scale. Commercial all-in-one solutions such as Datadog address part of the problem but are prohibitively expensive for student teams, startups, and cost-conscious engineering organizations; relying solely on the ELK stack, on the other hand, introduces significant performance bottlenecks once metric volume and cardinality grow.
+3.2 Why It Matters Now
+Fintech and data platforms increasingly co-locate batch analytics (PySpark), workflow orchestration (Airflow), and real-time trading (Kafka) in the same environment — yet are monitored with disconnected tools.
+Existing commercial APM/observability suites price out students, early-stage startups, and academic research environments.
+Pure log-based stacks (ELK-only) do not scale gracefully to billion-message-per-day metric volumes without a dedicated time-series and caching layer.
+Cloud-native, Infrastructure-as-Code deployment is now the default expectation for any credible observability product — ad hoc, manually-configured monitoring stacks are no longer acceptable.
+3.3 Supporting Literature
+The proposal is grounded in five peer-reviewed references spanning IEEE Transactions on Services Computing, IEEE CLOUD, and related venues (see Section 14, References), covering dynamic observability frameworks for distributed microservices, AI-driven autonomous data-pipeline management, intent-driven multi-engine observability for geo-distributed clouds, LLM-enabled microservice monitoring, and cross-domain telemetry architectures. These works collectively motivate the multi-engine, intent-driven, and automation-first design adopted here.
+4. Goals & Objectives
+4.1 Primary Objectives
+Design and develop a unified observability platform that monitors Apache Airflow, PySpark, microservices, and high-volume trading systems end-to-end.
+Collect and store metrics using Prometheus and logs using the ELK Stack, and provide real-time visualization and alerting using Grafana.
+Build a high-performance Metrics API using FastAPI, enhanced with Redis caching and Kafka integration, for fast and reliable query responses.
+Deploy the complete platform in a containerized, cloud-native environment using Docker, Kubernetes (Amazon EKS), and Terraform on AWS.
+Evaluate the platform's monitoring performance and cost-efficiency against existing observability solutions (Datadog, standalone ELK) under simulated high-volume data and trading workloads.
+4.2 Success Criteria (from design goals)
+Goal
+Target
+Kafka throughput
+Sustain 1–2 billion messages at scale without data loss or lag
+Metrics API latency
+Sub-millisecond response on Redis cache hits
+Observability coverage
+4 source types monitored: Airflow, PySpark, microservices, Kafka-based trading platform
+Infrastructure automation
+100% of AWS infrastructure provisioned and version-controlled via Terraform
+Resilience
+Kubernetes auto-scaling and self-healing keep the platform available under variable load
+Cost
+Meaningfully lower total cost of ownership than commercial suites (e.g., Datadog) for equivalent coverage
+5. Target Users & Use Cases
+5.1 Target User Personas
+Persona
+Needs
+How the Platform Serves Them
+Data Engineer
+Visibility into Airflow DAG health and PySpark job performance
+Unified dashboards correlating pipeline metrics and logs in one place
+DevOps / SRE
+Fast incident detection, alerting, and root-cause analysis across services
+Real-time Grafana alerting, centralized ELK log search, self-healing infra
+Trading-Systems Engineer
+Low-latency insight into Kafka-based trading pipeline throughput and lag
+Purpose-built Kafka metrics validated at 1–2B message scale
+Student / Researcher
+An affordable, understandable reference implementation of a modern observability stack
+Fully open-source, documented, IaC-driven deployment
+5.2 Representative Use Cases
+An SRE receives a Grafana alert that a PySpark job's processing latency has crossed an SLO threshold and drills into correlated Kibana logs within the same platform.
+A trading-systems engineer queries the Metrics API for real-time Kafka consumer-lag figures to feed an internal risk dashboard, relying on Redis-cached sub-millisecond responses.
+A data engineer reviews a unified Grafana view spanning Airflow DAG run status and downstream microservice health to diagnose a delayed data pipeline.
+A new team member studies the Terraform + Kubernetes manifests to understand how a production observability stack is provisioned end-to-end.
+6. Scope
+6.1 In Scope
+Collection of metrics and logs from Airflow, PySpark, selected microservices, and Kafka-based components of the trading system.
+A high-performance Metrics API (FastAPI + Redis) and Grafana dashboards for visualization.
+Fully containerized deployment (Docker) orchestrated on Kubernetes (Amazon EKS).
+Infrastructure as Code for all AWS resources (VPC, EKS, ALB, ElastiCache) via Terraform.
+Sample microservices and a Kafka producer to simulate realistic trading and pipeline workloads for validation.
+6.2 Out of Scope (Current Version)
+Full distributed tracing (span-level tracing across services) — deferred to future scope.
+A complete trading exchange — microservices represent trading-system behavior, not a production exchange.
+Multi-region deployment — the initial version is restricted to a single AWS region.
+AI-driven anomaly detection and automated self-healing beyond Kubernetes-native capabilities.
+6.3 Future Scope
+Distributed tracing integrated via OpenTelemetry spans.
+AI-driven anomaly detection over Prometheus/ELK data.
+Multi-region, multi-cluster deployment for geo-distributed resilience.
+Automated alerting escalation policies and self-healing runbooks.
+7. System Architecture
+The platform follows a five-layer architecture. Data-generating components emit telemetry, which passes through a collection layer, into dual storage engines, and is finally surfaced through an API/visualization layer — all running on a containerized, IaC-provisioned infrastructure layer.
+7.1 Layered Architecture Overview
+Layer
+Components
+Responsibility
+1. Data Sources
+Apache Airflow (DAG orchestration), PySpark Jobs (batch analytics), Microservices (REST/gRPC APIs), Trading Platform (Kafka, high volume)
+Generate raw metrics, logs, and events
+2. Collection
+OpenTelemetry Collector, Prometheus Exporters
+Standardize and forward traces, metrics, and logs from every source
+3. Storage & Processing
+Prometheus (time-series metrics), ELK Stack — Elasticsearch + Logstash (log indexing)
+Persist and index metrics and logs for querying
+4. API & Visualization
+FastAPI Metrics API, Redis (query cache), Grafana (metrics dashboards), Kibana (log analysis)
+Expose low-latency query endpoints and render real-time dashboards
+5. Infrastructure
+Docker (containerization), Amazon EKS / Kubernetes (orchestration & auto-scaling), Terraform on AWS (IaC)
+Package, deploy, scale, and manage the full stack
+7.2 Data Flow
+Data Sources emit metrics via Prometheus-format exporters and logs/traces via OpenTelemetry client libraries.
+The Collection layer (OpenTelemetry Collector + Prometheus exporters) receives and standardizes this telemetry.
+Metrics flow into Prometheus; logs flow into the ELK Stack (Elasticsearch, indexed via Logstash).
+The FastAPI Metrics API queries Prometheus, using Redis as a query cache to serve sub-millisecond responses to repeated queries.
+Grafana renders Prometheus-backed dashboards; Kibana provides a dedicated log-analysis interface over Elasticsearch.
+The entire stack is containerized with Docker, deployed on Amazon EKS, and provisioned end-to-end with Terraform.
+7.3 Architecture Diagram (textual reference)
+Data Sources → Collection (OTel Collector, Prometheus Exporters) → Storage (Prometheus ↔ ELK Stack) → [API & Caching: FastAPI ↔ Redis]  +  [Visualization: Grafana, Kibana] → Infrastructure (Docker → Kubernetes/EKS ↔ Terraform on AWS). The full diagram is maintained in the accompanying project slide deck (System Architecture slide).
+8. Functional Requirements
+8.1 Metrics Collection
+FR-1: The system shall scrape and store time-series metrics from Airflow, PySpark, microservices, and the Kafka-based trading platform via Prometheus.
+FR-2: The system shall support Prometheus alerting rules for threshold-based conditions (e.g., DAG failure rate, consumer lag).
+8.2 Log Aggregation
+FR-3: The system shall ingest logs from all monitored components into Elasticsearch via Logstash pipelines.
+FR-4: The system shall provide full-text, filterable log search through Kibana.
+8.3 Metrics API
+FR-5: The system shall expose a FastAPI-based REST API for querying current and historical metrics.
+FR-6: The Metrics API shall cache frequently requested queries in Redis to minimize repeated Prometheus load.
+FR-7: The Metrics API shall expose endpoints consumable by downstream systems (e.g., internal dashboards, risk engines).
+8.4 Visualization & Alerting
+FR-8: The system shall provide pre-built Grafana dashboards for pipeline health, trading-system performance, and overall system status.
+FR-9: Grafana shall support configurable alerting and SLO tracking.
+8.5 Deployment & Infrastructure
+FR-10: All platform components shall be packaged as Docker containers.
+FR-11: The platform shall be deployable and horizontally scalable on Amazon EKS with Kubernetes-native auto-scaling.
+FR-12: All AWS infrastructure (VPC, EKS, ALB, ElastiCache) shall be provisioned and version-controlled via Terraform.
+8.6 Workload Simulation
+FR-13: The system shall include sample microservices and a Kafka producer capable of generating realistic pipeline and trading workloads for validation and benchmarking.
+9. Non-Functional Requirements
+Category
+Requirement
+Performance
+Sustain Kafka streams at 1–2 billion message scale without data loss or lag
+Latency
+Metrics API shall return sub-millisecond responses on Redis cache hits
+Scalability
+Horizontally scalable architecture via Kubernetes auto-scaling on Amazon EKS
+Resilience
+Kubernetes self-healing and auto-scaling shall keep the platform available under variable load
+Cost-efficiency
+Total cost of ownership shall remain meaningfully below commercial suites such as Datadog
+Portability
+All services packaged as Docker containers for reproducibility across environments
+Reproducibility / Auditability
+Infrastructure fully defined as code (Terraform) — version-controlled and reviewable
+Openness
+Platform built as an open-source solution with no vendor lock-in
+Usability
+Dashboards and APIs shall be usable by both observability newcomers and production practitioners
+10. Technology Stack
+10.1 Detailed Stack
+Category
+Technology
+Purpose
+Orchestration
+Apache Airflow
+Workflow scheduling and DAG-level pipeline monitoring
+Processing
+PySpark
+Distributed data processing with job-level metrics emission
+Messaging
+Apache Kafka
+High-throughput event streaming (1–2 billion messages / scale)
+Metrics
+Prometheus
+Time-series metrics scraping, storage, and alerting rules
+Logging
+Elasticsearch + Logstash + Kibana (ELK)
+Centralized log ingestion, indexing, search, and analysis
+Visualization
+Grafana
+Real-time metrics dashboards, alerting, and SLO tracking
+Metrics API
+FastAPI + Redis
+High-performance REST API with sub-millisecond cache hits
+Containers
+Docker
+Portable, reproducible packaging for all platform components
+Orchestration (infra)
+Amazon EKS (Kubernetes)
+Auto-scaling, self-healing container orchestration
+IaC & Cloud
+Terraform on AWS
+Infrastructure as code for VPC, EKS, ElastiCache, load balancers
+Telemetry
+OpenTelemetry
+Standardized metrics/log/trace exporters across services
+Languages
+Python (primary), Java / Node.js
+Core platform logic; polyglot microservices support
+10.2 Development Tooling
+Docker & Docker Compose — local development and multi-service orchestration
+Terraform — AWS infrastructure provisioning
+Git — version control
+VS Code / PyCharm — primary IDEs
+11. Data & API Design
+11.1 Metrics Data Model (Prometheus)
+Metrics follow standard Prometheus time-series conventions: a metric name, a set of key-value labels identifying source (e.g., component="airflow", dag_id, job, service), and a timestamped numeric value. Suggested label conventions:
+component: airflow | pyspark | microservice | kafka-trading
+environment: dev | staging | prod
+severity (for alerting rules): info | warning | critical
+11.2 Log Data Model (ELK)
+Logs are shipped through Logstash into Elasticsearch with a normalized schema including: timestamp, component, log_level, message, trace_id (where available), and source_host, enabling consistent cross-component search in Kibana.
+11.3 Metrics API — Representative Endpoints
+Endpoint
+Method
+Description
+/api/v1/metrics/{component}
+GET
+Fetch current metrics for a given component (airflow, pyspark, microservice, kafka)
+/api/v1/metrics/{component}/history
+GET
+Fetch historical time-series data with time-range query params
+/api/v1/kafka/lag
+GET
+Fetch current consumer-lag metrics for the trading platform
+/api/v1/health
+GET
+Platform-wide health/status summary
+/api/v1/alerts
+GET
+List currently firing Grafana/Prometheus alerts
+All endpoints are read-optimized and Redis-cached with a short TTL to balance data freshness against cache-hit latency; exact routes and TTLs will be finalized during API implementation.
+12. Milestones & Timeline (AY 2026–27)
+Phase
+Milestone
+Key Deliverable
+Phase 1
+Synopsis & PRD finalization
+Approved synopsis + this PRD
+Phase 2
+Core infrastructure setup
+Terraform AWS baseline, EKS cluster, Docker images for core services
+Phase 3
+Data source integration
+Airflow, PySpark, sample microservices, Kafka producer instrumented
+Phase 4
+Storage & collection layer
+Prometheus + ELK operational; OpenTelemetry collector deployed
+Phase 5
+Metrics API & caching
+FastAPI + Redis endpoints live and cache-validated
+Phase 6
+Visualization & alerting
+Grafana dashboards, Kibana views, alert rules configured
+Phase 7
+Load testing & benchmarking
+Validation at 1–2 billion Kafka message scale; cost/perf comparison vs. Datadog & standalone ELK
+Phase 8
+Final report & demo
+Final project report, live demo, viva-voce presentation
+13. Risks, Assumptions & Dependencies
+13.1 Risks
+Risk
+Impact
+Mitigation
+AWS cost overrun during load testing at billion-message scale
+High
+Use short-lived, right-sized EKS node groups; tear down after each benchmark run; leverage AWS student/free-tier credits where possible
+Team unfamiliarity with any one stack component (e.g., Terraform, EKS)
+Medium
+Time-boxed learning spikes per component; reference the cited IEEE papers and official docs
+Kafka throughput target (1–2B messages) not achievable within project timeline
+Medium
+Scale testing incrementally; document actual achieved throughput honestly even if below target
+Scope creep from "Future Scope" items (tracing, AI anomaly detection)
+Medium
+Explicitly timebox core scope (Section 6.1) before touching future-scope items
+Single-region deployment limits fault-tolerance demonstration
+Low
+Clearly document as a known project boundary, not a defect
+13.2 Assumptions
+The team has access to an AWS account with sufficient quota/credits for EKS, ElastiCache, and ALB resources.
+Sample/synthetic trading and pipeline data will be used in place of proprietary production data.
+Benchmarking against Datadog will be based on published pricing/capability comparisons rather than a live paid Datadog deployment, unless a trial account is available.
+13.3 Dependencies
+AWS account and IAM permissions for EKS, VPC, ElastiCache, and ALB provisioning.
+Availability of the five cited reference papers for design justification in the final report.
+Faculty guide (Prof. R. Y. Totare) sign-off at each milestone review.
+14. References
+U. Satapathy et al., “XPLOG: A Dynamic Observability Framework for Distributed Sandboxed Microservices,” IEEE Transactions on Services Computing, vol. 19, no. 1, pp. 794–807, Jan.–Feb. 2026.
+D. Thakar, V. Bhatt, and M. Vidyanand, “Next-Generation Data Pipelines: Coordinated AI Agents for Autonomous Management, Optimization and Self-Healing,” 2026 International Conference on AI x Data and Knowledge Engineering (AIxDKE), 2026, doi: 10.1109/AIxDKE67294.2026.00025.
+A. Chakraborty et al., “Intent-Driven Multi-Engine Observability Dataflows for Heterogeneous Geo-Distributed Clouds,” 2024 IEEE 17th International Conference on Cloud Computing (CLOUD), 2024, doi: 10.1109/CLOUD62652.2024.00014.
+M. Götz and H. Baghban, “LEMON: LLM-Enabled Monitoring for Microservices Orchestration,” IEEE Transactions on Services Computing, 2026.
+“Cross-domain telemetry architecture: dynamic observability in the computing continuum,” Computing (Springer), 2026.
+15. Approval
+Role
+Name
+Signature / Date
+Project Guide
+Prof. R. Y. Totare
+Head of Department
+Dr. H. B. Magar
