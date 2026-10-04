@@ -92,7 +92,7 @@ next-dashboard/
 ## 🔗 Related Services
 
 - **FastAPI Metrics API**: `http://localhost:8004` (Swagger: `/docs`)
-- **Grafana**: `http://localhost:3001`
+- **Grafana**: `http://localhost:3000`
 - **Kibana**: `http://localhost:5601`
 - **Jaeger**: `http://localhost:16686`
 - **Airflow**: `http://localhost:8080`
